@@ -8,14 +8,15 @@ que todos hayan llegado al aula.
 Nota: maximizar la concurrencia; no generar demora innecesaria; todos los procesos deben 
 terminar su ejecución
 Coidgo:
-b)
+b y c)
 Process alumno[id:1..N]{
+    admin!llegue()
+    admin?avanza()
     text Examen = HacerExamen()
     int nota;
     int idP;
-    admin!.port(id,Examen)
-    admin?.quien(idP)
-    profesores[idP].port(nota)
+    admin!port(id,Examen)
+    profesores[*]?port(nota)
 }
 
 Process profesores[id:1..P]{
@@ -35,15 +36,20 @@ Process admin{
     int cont = 0;
     text Examen;
     int idA,idP;
-    cola buffer
-    Do  cont < N; alumno[*]?.port(idA,Examen) ->    buffer.push(idA,Examen)
+    cola buffer;
+    for i = 1 to N{
+        Alumno[*]admin?llegue()
+    }
+    for i = 1 to N{
+        Alumno[i]!Avanza()
+    }
+    Do  cont < N; alumno[*]?port(idA,Examen) ->    buffer.push(idA,Examen)
                                                     cont++                
-        not empty(buffer) profesores[*]?.listo(idP) ->    buffer.pop(idA,Examen)
-                                                          alumno[idA]!.quien(idP)
-                                                          profesores[idP]!.corregime(idA,Examen,true)
+        not empty(buffer) profesores[*]?listo(idP) ->    buffer.pop(idA,Examen)
+                                                         profesores[idP]!corregime(idA,Examen,true)
     oD
     for 1 to P {    
-        profesores[*]?.listo(idP)
-        profesores[idP]!.corregime(-1,null,false)
+        profesores[*]?listo(idP)
+        profesores[idP]!corregime(-1,null,false)
     }
 }
